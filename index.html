@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sữa Mẹ Ghi Chép</title>
+<meta name="description" content="Ghi lượng sữa hút và sữa bé uống bằng giọng nói, xem biểu đồ theo ngày.">
+<meta name="theme-color" content="#fff7f4">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sữa mẹ">
+<style>
+:root{
+  --bg:#fff7f4; --card:#ffffff; --ink:#2b2226; --muted:#85757c; --line:#f0e1dc;
+  --pump:#d6456f; --pump-soft:#fde4ec; --feed:#1f8f86; --feed-soft:#dcf3f0;
+  --accent:#d6456f; --accent-ink:#ffffff; --warn:#b86a00;
+  --shadow:0 1px 2px rgba(80,30,45,.06),0 4px 14px rgba(80,30,45,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#1a1417; --card:#251c20; --ink:#f4eaed; --muted:#a8969d; --line:#3a2c32;
+    --pump:#f27a9e; --pump-soft:#42212d; --feed:#4fc7bb; --feed-soft:#16363a;
+    --accent:#f27a9e; --accent-ink:#2b1019; --shadow:none;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+body{min-height:100dvh;padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 84px)}
+main{max-width:560px;margin:0 auto}
+h1{font-size:20px;margin:0}
+h2{font-size:15px;margin:0 0 8px;color:var(--muted);font-weight:600}
+.card{background:var(--card);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.tab{display:none}.tab.on{display:block}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
+.daynav{display:flex;align-items:center;gap:4px}
+.daynav button{width:36px;height:36px;border-radius:50%;border:0;background:var(--card);color:var(--ink);font-size:18px;box-shadow:var(--shadow)}
+.daynav .lbl{min-width:132px;text-align:center;font-weight:600;font-size:14px}
+button{font:inherit;cursor:pointer}
+/* mic */
+.micwrap{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.mic{width:92px;height:92px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 6px 20px rgba(214,69,111,.35);transition:transform .15s}
+.mic:active{transform:scale(.95)}
+.mic svg{width:40px;height:40px}
+.mic.rec{animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(214,69,111,.55)}100%{box-shadow:0 0 0 26px rgba(214,69,111,0)}}
+@media (prefers-reduced-motion:reduce){.mic.rec{animation:none;outline:4px solid var(--pump-soft)}}
+.status{min-height:22px;color:var(--muted);font-size:14px}
+.status.err{color:var(--warn)}
+textarea,input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%}
+textarea{resize:none;min-height:56px}
+.row{display:flex;gap:8px;align-items:center}
+.btn{border:0;border-radius:12px;padding:10px 16px;background:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:#c0392b;border:1px solid var(--line)}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:5px 10px;font-size:13px}
+.preview{border:1px dashed var(--accent);border-radius:14px;padding:10px;margin-top:10px}
+.switch{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin-top:10px}
+.switch input{width:auto}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{border-radius:14px;padding:10px 8px;text-align:center}
+.stat b{display:block;font-size:22px;line-height:1.1}
+.stat span{font-size:12px;color:var(--muted)}
+.stat.p{background:var(--pump-soft)}.stat.p b{color:var(--pump)}
+.stat.f{background:var(--feed-soft)}.stat.f b{color:var(--feed)}
+.stat.n{background:var(--bg)}
+/* list */
+.entry{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:var(--ink);text-align:left}
+.entry:first-child{border-top:0}
+.dot{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:18px;flex:none}
+.dot.pump{background:var(--pump-soft)}.dot.feed{background:var(--feed-soft)}
+.entry .t{flex:1}.entry .t small{display:block;color:var(--muted);font-size:12px}
+.entry .v{font-weight:700;font-size:18px}
+.entry .v.pump{color:var(--pump)}.entry .v.feed{color:var(--feed)}
+.empty{color:var(--muted);text-align:center;padding:14px 0;font-size:14px}
+/* charts */
+.seg{display:inline-flex;background:var(--bg);border-radius:12px;padding:3px;border:1px solid var(--line)}
+.seg button{border:0;background:none;color:var(--muted);padding:6px 14px;border-radius:9px;font-size:14px}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+svg.chart{width:100%;height:auto;display:block;touch-action:manipulation}
+.chart text{fill:var(--muted);font-size:10px}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .bp{fill:var(--pump)}.chart .bf{fill:var(--feed)}
+.chart .lp{stroke:var(--pump);fill:none;stroke-width:2.4;stroke-linejoin:round}
+.chart .lf{stroke:var(--feed);fill:none;stroke-width:2.4;stroke-linejoin:round}
+.chart .sel{fill:var(--ink);opacity:.06}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted);margin:2px 0 6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.readout{min-height:20px;font-size:13px;color:var(--ink);margin-top:4px}
+/* nav */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+nav .in{display:flex;width:100%;max-width:560px}
+nav button{flex:1;border:0;background:none;padding:9px 0 8px;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button svg{width:24px;height:24px}
+nav button.on{color:var(--accent);font-weight:600}
+/* toast + dialog */
+.toast{position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom) + 72px);max-width:528px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:14px;padding:12px 14px;display:none;align-items:center;gap:10px;font-size:14px;z-index:20}
+.toast.on{display:flex}
+.toast span{flex:1}.toast button{background:none;border:0;color:inherit;font-weight:700;text-decoration:underline}
+dialog{border:0;border-radius:20px;padding:18px;width:min(92vw,420px);background:var(--card);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.tog{display:flex;gap:6px}.tog button{flex:1;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.tog button.on.pump{background:var(--pump-soft);border-color:var(--pump);color:var(--pump);font-weight:700}
+.tog button.on.feed{background:var(--feed-soft);border-color:var(--feed);color:var(--feed);font-weight:700}
+.hist{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:var(--ink);font-size:15px}
+.hist:first-child{border-top:0}
+.hist small{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+
+<!-- HÔM NAY -->
+<section id="tab-today" class="tab on">
+  <div class="top">
+    <h1>Sữa mẹ 🍼</h1>
+    <div class="daynav">
+      <button id="prevDay" aria-label="Ngày trước">‹</button>
+      <div class="lbl" id="dayLbl"></div>
+      <button id="nextDay" aria-label="Ngày sau">›</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="micwrap">
+      <button class="mic" id="mic" aria-label="Bấm để nói">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+      </button>
+      <div class="status" id="status" role="status" aria-live="polite">Bấm mic và nói, ví dụ: “hút 120 ml”</div>
+    </div>
+    <textarea id="said" rows="2" placeholder="Lời nói hiện ở đây. Cũng có thể gõ, hoặc bấm mic trên bàn phím iPhone để đọc."></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="addText" style="flex:1">Thêm từ câu này</button>
+      <button class="btn ghost" id="manual">Nhập tay</button>
+    </div>
+    <div id="preview"></div>
+    <label class="switch"><input type="checkbox" id="auto" checked> Tự lưu ngay sau khi nói (có Hoàn tác)</label>
+    <div class="chips" id="examples"></div>
+    <p class="hint">Nói được: lượng (“120 ml”, “một trăm hai mươi”), giờ (“lúc 7 giờ sáng”, “30 phút trước”), nhiều cữ trong một câu, “trái 60 phải 50”, “sữa công thức”.</p>
+  </div>
+
+  <div class="card">
+    <div class="stats" id="stats"></div>
+  </div>
+  <div class="card">
+    <h2>Các cữ trong ngày</h2>
+    <div id="list"></div>
+  </div>
+</section>
+
+<!-- BIỂU ĐỒ -->
+<section id="tab-charts" class="tab">
+  <div class="top"><h1>Biểu đồ</h1>
+    <div class="seg" id="range"><button data-r="7" class="on">7 ngày</button><button data-r="14">14 ngày</button><button data-r="30">30 ngày</button></div>
+  </div>
+  <div class="card">
+    <h2>Tổng mỗi ngày (ml)</h2>
+    <div class="legend"><span><i style="background:var(--pump)"></i>Hút</span><span><i style="background:var(--feed)"></i>Bé uống</span></div>
+    <div id="chartDays"></div><div class="readout" id="roDays">Chạm vào một ngày để xem chi tiết.</div>
+  </div>
+  <div class="card">
+    <div class="stats" id="avgStats"></div>
+  </div>
+  <div class="card">
+    <h2 id="cumTitle">Tích luỹ trong ngày</h2>
+    <div class="legend"><span><i style="background:var(--pump)"></i>Hút</span><span><i style="background:var(--feed)"></i>Bé uống</span></div>
+    <div id="chartCum"></div>
+  </div>
+  <div class="card">
+    <h2>Trung bình theo giờ trong ngày (ml)</h2>
+    <div class="legend"><span><i style="background:var(--pump)"></i>Hút</span><span><i style="background:var(--feed)"></i>Bé uống</span></div>
+    <div id="chartHour"></div><div class="readout" id="roHour"></div>
+  </div>
+</section>
+
+<!-- DỮ LIỆU -->
+<section id="tab-data" class="tab">
+  <div class="top"><h1>Lịch sử</h1></div>
+  <div class="card" id="history"></div>
+  <div class="card">
+    <h2>Sao lưu</h2>
+    <div class="row" style="flex-wrap:wrap">
+      <button class="btn ghost" id="expCsv">Tải CSV</button>
+      <button class="btn ghost" id="expJson">Sao lưu JSON</button>
+      <button class="btn ghost" id="impJson">Khôi phục</button>
+      <input type="file" id="file" accept="application/json" hidden>
+    </div>
+    <p class="hint">Dữ liệu chỉ lưu trên thiết bị này. Hãy sao lưu thỉnh thoảng, nhất là trước khi xoá dữ liệu Safari.</p>
+  </div>
+</section>
+</main>
+
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo">Hoàn tác</button></div>
+
+<dialog id="dlg">
+  <form method="dialog" id="form">
+    <h2 id="dlgTitle" style="color:var(--ink);font-size:17px">Cữ sữa</h2>
+    <div class="tog" id="typeTog"><button type="button" data-t="pump" class="pump">Hút</button><button type="button" data-t="feed" class="feed">Bé uống</button></div>
+    <label for="fMl">Lượng (ml)</label>
+    <input id="fMl" type="number" inputmode="numeric" min="0" max="1500">
+    <label for="fTime">Thời gian</label>
+    <input id="fTime" type="datetime-local" required>
+    <label class="switch" id="dirRow" style="margin-top:12px"><input type="checkbox" id="fDirect"> Bé bú trực tiếp (không biết lượng thì để trống ml)</label>
+    <div id="srcRow">
+      <label for="fSrc">Loại sữa bé uống</label>
+      <select id="fSrc"><option value="breast">Sữa mẹ</option><option value="formula">Sữa công thức</option></select>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button type="button" class="btn danger" id="fDel">Xoá</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn ghost" id="fCancel">Đóng</button>
+      <button type="submit" class="btn">Lưu</button>
+    </div>
+  </form>
+</dialog>
+
+<nav><div class="in">
+  <button data-tab="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>Hôm nay</button>
+  <button data-tab="charts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Biểu đồ</button>
+  <button data-tab="data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Lịch sử</button>
+</div></nav>
+
+<script src="parser.js"></script>
+<script>
+(function () {
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+const KEY = 'milklog.v1', SKEY = 'milklog.settings';
+
+/* ---------- lưu trữ ---------- */
+function load(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('Không lưu được vào bộ nhớ trình duyệt.'); } }
+let entries = load(KEY, []);
+let settings = Object.assign({ auto: true }, load(SKEY, {}));
+const persist = () => save(KEY, entries);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/* ---------- ngày giờ ---------- */
+const pad = (n) => String(n).padStart(2, '0');
+const dayKey = (ts) => { const d = new Date(ts); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+const fromKey = (k) => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const hhmm = (ts) => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+const addDays = (k, n) => { const d = fromKey(k); d.setDate(d.getDate() + n); return dayKey(d); };
+const todayKey = () => dayKey(Date.now());
+const toLocalInput = (ts) => { const d = new Date(ts); return dayKey(ts) + 'T' + hhmm(ts); };
+function dayLabel(k) {
+  if (k === todayKey()) return 'Hôm nay';
+  if (k === addDays(todayKey(), -1)) return 'Hôm qua';
+  return fromKey(k).toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric' });
+}
+let selDay = todayKey();
+
+/* ---------- tổng hợp ---------- */
+function sums(list) {
+  let p = 0, f = 0, pn = 0, fn = 0;
+  for (const e of list) { if (e.type === 'pump') { p += e.ml; pn++; } else { f += e.ml; fn++; } }
+  return { p, f, pn, fn };
+}
+const byDay = (k) => entries.filter((e) => dayKey(e.ts) === k).sort((a, b) => a.ts - b.ts);
+const typeName = (t) => (t === 'pump' ? 'Hút' : 'Bé uống');
+
+/* ---------- toast ---------- */
+let toastTimer, undoFn = null;
+function toast(msg, undo) {
+  $('#toastMsg').textContent = msg;
+  undoFn = undo || null;
+  $('#toastUndo').style.display = undo ? '' : 'none';
+  $('#toast').classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('#toast').classList.remove('on'), undo ? 7000 : 3500);
+}
+$('#toastUndo').onclick = () => { if (undoFn) undoFn(); $('#toast').classList.remove('on'); };
+
+/* ---------- vẽ màn hình Hôm nay ---------- */
+function renderToday() {
+  $('#dayLbl').textContent = dayLabel(selDay);
+  $('#nextDay').disabled = selDay >= todayKey();
+  $('#nextDay').style.opacity = selDay >= todayKey() ? .35 : 1;
+  const list = byDay(selDay), s = sums(list);
+  $('#stats').innerHTML =
+    `<div class="stat p"><b>${s.p}</b><span>ml hút · ${s.pn} cữ</span></div>` +
+    `<div class="stat f"><b>${s.f}</b><span>ml bé uống · ${s.fn} cữ</span></div>` +
+    `<div class="stat n"><b>${s.p - s.f >= 0 ? '+' : ''}${s.p - s.f}</b><span>chênh lệch ml</span></div>`;
+  $('#list').innerHTML = list.length ? list.map((e) =>
+    `<button class="entry" data-id="${e.id}"><div class="dot ${e.type}">${e.type === 'pump' ? '🤱' : '🍼'}</div>
+     <div class="t">${e.direct ? 'Bé bú trực tiếp' : typeName(e.type)}<small>${e.totalOnly ? 'chỉ có tổng ngày' : hhmm(e.ts)}${e.type === 'feed' && e.src === 'formula' ? ' · sữa công thức' : ''}${e.note ? ' · ' + e.note.replace(/[<>&]/g, '') : ''}</small></div>
+     <div class="v ${e.type}">${e.direct && !e.ml ? '🤱' : e.ml + ' ml'}</div></button>`).join('') :
+    '<div class="empty">Chưa có cữ nào. Bấm mic để ghi.</div>';
+}
+$('#list').addEventListener('click', (ev) => { const b = ev.target.closest('.entry'); if (b) openDialog(entries.find((e) => e.id === b.dataset.id)); });
+$('#prevDay').onclick = () => { selDay = addDays(selDay, -1); renderAll(); };
+$('#nextDay').onclick = () => { if (selDay < todayKey()) { selDay = addDays(selDay, 1); renderAll(); } };
+
+/* ---------- thêm dữ liệu từ lời nói ---------- */
+const describe = (e) => (e.direct && !e.ml ? 'Bú trực tiếp' : `${typeName(e.type)} ${e.ml} ml`) + ` lúc ${hhmm(e.ts)}`;
+function baseTime() {
+  const now = new Date();
+  if (selDay === todayKey()) return now;
+  const d = fromKey(selDay); d.setHours(now.getHours(), now.getMinutes(), 0, 0); return d;
+}
+let pending = null;
+function handleText(text) {
+  text = (text || '').trim();
+  if (!text) { setStatus('Chưa có nội dung để thêm.', true); return; }
+  const r = MilkParser.parse(text, baseTime());
+  if (!r.entries.length) { setStatus('Chưa nghe ra lượng sữa. Thử: “hút 120 ml” hoặc “bé uống 60 ml”.', true); return; }
+  if (r.needsType) {
+    pending = r.entries; renderPreview(true); setStatus('Chưa rõ là hút hay bé uống. Chọn giúp mình nhé.', true); return;
+  }
+  if (settings.auto) commit(r.entries); else { pending = r.entries; renderPreview(false); }
+}
+function commit(list) {
+  const added = list.map((e) => ({ id: uid(), type: e.type, ml: e.ml, ts: e.ts, src: e.src, direct: e.direct || undefined }));
+  entries.push(...added); persist();
+  pending = null; renderPreview();
+  $('#said').value = '';
+  setStatus('Đã ghi ' + added.length + ' cữ.');
+  if (added.some((e) => dayKey(e.ts) !== selDay)) selDay = dayKey(added[0].ts);
+  renderAll();
+  toast('Đã thêm: ' + added.map(describe).join(' · '), () => {
+    const ids = new Set(added.map((e) => e.id));
+    entries = entries.filter((e) => !ids.has(e.id)); persist(); renderAll();
+  });
+}
+function renderPreview(needType) {
+  const el = $('#preview');
+  if (!pending) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="preview">' + pending.map((e, i) =>
+    `<div class="row" style="margin-bottom:6px"><div style="flex:1">${e.type ? describe(e) : e.ml + ' ml lúc ' + hhmm(e.ts)}</div>` +
+    (e.type ? '' : `<button class="chip" data-i="${i}" data-t="pump">Hút</button><button class="chip" data-i="${i}" data-t="feed">Bé uống</button>`) + '</div>').join('') +
+    `<div class="row"><button class="btn" id="pvOk" style="flex:1" ${pending.some((e) => !e.type) ? 'disabled' : ''}>Lưu</button><button class="btn ghost" id="pvNo">Huỷ</button></div></div>`;
+}
+$('#preview').addEventListener('click', (ev) => {
+  const c = ev.target.closest('.chip');
+  if (c) { pending[+c.dataset.i].type = c.dataset.t; renderPreview(); return; }
+  if (ev.target.id === 'pvOk') commit(pending);
+  if (ev.target.id === 'pvNo') { pending = null; renderPreview(); }
+});
+$('#addText').onclick = () => handleText($('#said').value);
+$('#auto').checked = settings.auto;
+$('#auto').onchange = (e) => { settings.auto = e.target.checked; save(SKEY, settings); };
+['hút 120 ml', 'bé uống 60 ml', 'lúc 7 giờ sáng hút 100 ml', 'hút trái 60 phải 50', 'bé bú trực tiếp lúc 12 giờ', 'bé uống 30 phút trước 70 ml'].forEach((t) => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = t;
+  b.onclick = () => { $('#said').value = t; }; $('#examples').appendChild(b);
+});
+
+/* ---------- ghi âm giọng nói -> chữ ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false, finalText = '';
+function setStatus(msg, err) { const s = $('#status'); s.textContent = msg; s.classList.toggle('err', !!err); }
+function stopMic() { listening = false; $('#mic').classList.remove('rec'); $('#mic').setAttribute('aria-label', 'Bấm để nói'); }
+function startMic() {
+  if (!SR) {
+    setStatus('Trình duyệt này không hỗ trợ ghi âm trực tiếp. Hãy bấm biểu tượng mic trên bàn phím iPhone để đọc vào ô bên dưới.', true);
+    $('#said').focus(); return;
+  }
+  rec = new SR();
+  rec.lang = 'vi-VN'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+  finalText = '';
+  rec.onstart = () => { listening = true; $('#mic').classList.add('rec'); $('#mic').setAttribute('aria-label', 'Đang nghe, bấm để dừng'); setStatus('Đang nghe… nói xong thì bấm lại hoặc chờ một chút'); };
+  rec.onresult = (ev) => {
+    let interim = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const t = ev.results[i][0].transcript;
+      if (ev.results[i].isFinal) finalText += t + ' '; else interim += t;
+    }
+    $('#said').value = (finalText + interim).trim();
+  };
+  rec.onerror = (ev) => {
+    const m = {
+      'not-allowed': 'Chưa cho phép micro. Vào Cài đặt > Safari (hoặc Cài đặt > Quyền riêng tư > Micro) để bật, rồi thử lại.',
+      'service-not-allowed': 'iPhone chưa bật Đọc chính tả. Vào Cài đặt > Cài đặt chung > Bàn phím > bật “Đọc chính tả”. Hoặc dùng mic trên bàn phím.',
+      'no-speech': 'Mình chưa nghe thấy gì. Bấm mic và thử lại.',
+      'audio-capture': 'Không tìm thấy micro.',
+      'network': 'Cần có mạng để nhận dạng giọng nói.',
+      'aborted': ''
+    };
+    const msg = m[ev.error];
+    setStatus(msg === undefined ? 'Lỗi ghi âm: ' + ev.error : msg, true);
+    if (ev.error !== 'no-speech' && ev.error !== 'aborted') $('#said').focus();
+  };
+  rec.onend = () => {
+    const had = listening; stopMic();
+    const txt = (finalText || $('#said').value).trim();
+    if (had && txt) handleText(txt);
+    else if ($('#status').classList.contains('err') === false && !txt) setStatus('Bấm mic và nói, ví dụ: “hút 120 ml”');
+  };
+  try { rec.start(); } catch (e) { setStatus('Không bật được micro, thử lại.', true); }
+}
+$('#mic').onclick = () => { if (listening) { try { rec.stop(); } catch (e) {} } else startMic(); };
+if (!SR) setStatus('Thiết bị này chưa hỗ trợ ghi âm trong trình duyệt. Hãy gõ hoặc bấm mic trên bàn phím iPhone vào ô bên dưới.', true);
+
+/* ---------- hộp sửa / nhập tay ---------- */
+let editing = null, fType = 'pump';
+function setType(t) { fType = t; $$('#typeTog button').forEach((b) => b.classList.toggle('on', b.dataset.t === t)); $('#srcRow').style.display = t === 'feed' ? '' : 'none'; $('#dirRow').style.display = t === 'feed' ? '' : 'none'; }
+$('#typeTog').onclick = (e) => { const b = e.target.closest('button'); if (b) setType(b.dataset.t); };
+function openDialog(e) {
+  editing = e || null;
+  $('#dlgTitle').textContent = e ? 'Sửa cữ sữa' : 'Thêm cữ sữa';
+  setType(e ? e.type : 'pump');
+  $('#fMl').value = e && e.ml ? e.ml : '';
+  $('#fDirect').checked = !!(e && e.direct);
+  $('#fTime').value = toLocalInput(e ? e.ts : baseTime().getTime());
+  $('#fSrc').value = (e && e.src) || 'breast';
+  $('#fDel').style.display = e ? '' : 'none';
+  $('#dlg').showModal();
+}
+$('#manual').onclick = () => openDialog(null);
+$('#fCancel').onclick = () => $('#dlg').close();
+$('#fDel').onclick = () => {
+  const gone = editing; entries = entries.filter((x) => x.id !== gone.id); persist(); $('#dlg').close(); renderAll();
+  toast('Đã xoá ' + describe(gone), () => { entries.push(gone); persist(); renderAll(); });
+};
+$('#form').onsubmit = (ev) => {
+  ev.preventDefault();
+  const direct = fType === 'feed' && $('#fDirect').checked;
+  const ml = Math.round(+$('#fMl').value || 0), ts = new Date($('#fTime').value).getTime();
+  if (!((ml >= 1 && ml <= 1500) || (direct && ml === 0)) || isNaN(ts)) { toast('Lượng sữa hoặc thời gian chưa hợp lệ.'); return; }
+  const data = { type: fType, ml, ts, src: fType === 'feed' ? $('#fSrc').value : undefined, direct: direct || undefined };
+  if (editing) Object.assign(editing, data); else entries.push(Object.assign({ id: uid() }, data));
+  persist(); $('#dlg').close(); selDay = dayKey(ts); renderAll();
+};
+
+/* ---------- biểu đồ (SVG thuần, chạy offline) ---------- */
+function niceMax(v) { if (v <= 0) return 100; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+const W = 360, H = 190, PL = 34, PR = 8, PT = 10, PB = 22;
+function axes(max) {
+  let s = '';
+  for (let i = 0; i <= 4; i++) {
+    const y = PT + (H - PT - PB) * (1 - i / 4);
+    s += `<line class="grid" x1="${PL}" x2="${W - PR}" y1="${y}" y2="${y}"/><text x="${PL - 5}" y="${y + 3}" text-anchor="end">${Math.round(max * i / 4)}</text>`;
+  }
+  return s;
+}
+function barChart(el, data, onPick) {
+  const n = data.length, max = niceMax(Math.max(1, ...data.flatMap((d) => [d.a, d.b])));
+  const gw = (W - PL - PR) / n, bw = Math.min(14, gw * 0.4), ih = H - PT - PB;
+  const step = n > 14 ? Math.ceil(n / 8) : n > 8 ? 2 : 1;
+  let s = axes(max);
+  data.forEach((d, i) => {
+    const cx = PL + gw * i + gw / 2;
+    const ha = ih * d.a / max, hb = ih * d.b / max;
+    s += `<g data-i="${i}"><rect class="sel" x="${PL + gw * i}" y="${PT}" width="${gw}" height="${ih}" opacity="0"/>` +
+      `<rect class="bp" x="${cx - bw - 0.5}" y="${PT + ih - ha}" width="${bw}" height="${ha}" rx="2"/>` +
+      `<rect class="bf" x="${cx + 0.5}" y="${PT + ih - hb}" width="${bw}" height="${hb}" rx="2"/>` +
+      `<rect x="${PL + gw * i}" y="${PT}" width="${gw}" height="${ih}" fill="transparent"/></g>`;
+    if (i % step === 0 || i === n - 1) s += `<text x="${cx}" y="${H - 6}" text-anchor="middle">${d.label}</text>`;
+  });
+  el.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Biểu đồ cột hút và bé uống">${s}</svg>`;
+  el.querySelector('svg').onclick = (ev) => {
+    const g = ev.target.closest('g[data-i]'); if (!g) return;
+    $$('.sel', el).forEach((r) => r.setAttribute('opacity', 0));
+    g.querySelector('.sel').setAttribute('opacity', 1);
+    onPick(data[+g.dataset.i]);
+  };
+}
+function lineChart(el, pts) { // pts: {x:0..24, a, b} tích luỹ
+  const max = niceMax(Math.max(1, ...pts.map((p) => Math.max(p.a, p.b))));
+  const ih = H - PT - PB, iw = W - PL - PR;
+  const X = (x) => PL + iw * x / 24, Y = (v) => PT + ih * (1 - v / max);
+  const path = (k) => pts.map((p, i) => (i ? 'L' : 'M') + X(p.x).toFixed(1) + ' ' + Y(p[k]).toFixed(1)).join(' ');
+  let s = axes(max);
+  [0, 6, 12, 18, 24].forEach((h) => { s += `<text x="${X(h)}" y="${H - 6}" text-anchor="middle">${h}h</text>`; });
+  s += `<path class="lp" d="${path('a')}"/><path class="lf" d="${path('b')}"/>`;
+  el.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Biểu đồ tích luỹ trong ngày">${s}</svg>`;
+}
+let range = 7;
+function renderCharts() {
+  const days = []; const end = todayKey();
+  for (let i = range - 1; i >= 0; i--) {
+    const k = addDays(end, -i), s = sums(byDay(k)), d = fromKey(k);
+    days.push({ k, label: range <= 7 ? ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][d.getDay()] : d.getDate() + '/' + (d.getMonth() + 1), a: s.p, b: s.f, pn: s.pn, fn: s.fn });
+  }
+  barChart($('#chartDays'), days, (d) => {
+    $('#roDays').innerHTML = `<b>${dayLabel(d.k)}</b>: hút <b style="color:var(--pump)">${d.a} ml</b> (${d.pn} cữ) · bé uống <b style="color:var(--feed)">${d.b} ml</b> (${d.fn} cữ)`;
+  });
+  $('#roDays').textContent = 'Chạm vào một ngày để xem chi tiết.';
+  const active = days.filter((d) => d.a || d.b), nA = active.length || 1;
+  const tp = days.reduce((s, d) => s + d.a, 0), tf = days.reduce((s, d) => s + d.b, 0);
+  $('#avgStats').innerHTML =
+    `<div class="stat p"><b>${Math.round(tp / nA)}</b><span>ml hút TB/ngày</span></div>` +
+    `<div class="stat f"><b>${Math.round(tf / nA)}</b><span>ml bé uống TB/ngày</span></div>` +
+    `<div class="stat n"><b>${tp - tf >= 0 ? '+' : ''}${tp - tf}</b><span>tồn ${range} ngày (ml)</span></div>`;
+
+  // tích luỹ trong ngày đang chọn
+  $('#cumTitle').textContent = 'Tích luỹ trong ngày · ' + dayLabel(selDay) + ' (ml)';
+  const list = byDay(selDay), pts = [{ x: 0, a: 0, b: 0 }]; let a = 0, b = 0;
+  list.forEach((e) => {
+    const d = new Date(e.ts), x = d.getHours() + d.getMinutes() / 60;
+    pts.push({ x, a, b });
+    if (e.type === 'pump') a += e.ml; else b += e.ml;
+    pts.push({ x, a, b });
+  });
+  pts.push({ x: 24, a, b });
+  lineChart($('#chartCum'), pts);
+
+  // trung bình theo giờ
+  const hrs = Array.from({ length: 24 }, (_, h) => ({ label: h + 'h', a: 0, b: 0 }));
+  const since = fromKey(addDays(end, -(range - 1))).getTime();
+  entries.filter((e) => e.ts >= since && !e.totalOnly).forEach((e) => { const h = new Date(e.ts).getHours(); hrs[h][e.type === 'pump' ? 'a' : 'b'] += e.ml; });
+  hrs.forEach((h) => { h.a = Math.round(h.a / range); h.b = Math.round(h.b / range); });
+  barChart($('#chartHour'), hrs, (h) => { $('#roHour').innerHTML = `<b>${h.label}</b>: hút TB <b style="color:var(--pump)">${h.a} ml</b> · bé uống TB <b style="color:var(--feed)">${h.b} ml</b>`; });
+  $('#roHour').textContent = '';
+}
+$('#range').onclick = (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  range = +b.dataset.r; $$('#range button').forEach((x) => x.classList.toggle('on', x === b)); renderCharts();
+};
+
+/* ---------- lịch sử & sao lưu ---------- */
+function renderHistory() {
+  const keys = [...new Set(entries.map((e) => dayKey(e.ts)))].sort().reverse();
+  $('#history').innerHTML = keys.length ? keys.map((k) => {
+    const s = sums(byDay(k));
+    return `<button class="hist" data-k="${k}"><span>${fromKey(k).toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric', year: 'numeric' })}</span>` +
+      `<small><b style="color:var(--pump)">${s.p}</b> hút · <b style="color:var(--feed)">${s.f}</b> uống</small></button>`;
+  }).join('') : '<div class="empty">Chưa có dữ liệu.</div>';
+}
+$('#history').onclick = (e) => { const b = e.target.closest('.hist'); if (b) { selDay = b.dataset.k; showTab('today'); } };
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+$('#expCsv').onclick = () => {
+  const rows = ['ngay,gio,loai,ml,nguon'].concat([...entries].sort((a, b) => a.ts - b.ts).map((e) => [dayKey(e.ts), hhmm(e.ts), e.type === 'pump' ? 'hut' : 'be_uong', e.ml, e.src || ''].join(',')));
+  download('sua-me.csv', '﻿' + rows.join('\n'), 'text/csv');
+};
+$('#expJson').onclick = () => download('sua-me-backup-' + todayKey() + '.json', JSON.stringify(entries), 'application/json');
+$('#impJson').onclick = () => $('#file').click();
+$('#file').onchange = (ev) => {
+  const f = ev.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const arr = JSON.parse(r.result);
+      if (!Array.isArray(arr)) throw 0;
+      const have = new Set(entries.map((e) => e.id));
+      const add = arr.filter((e) => e && e.id && !have.has(e.id) && (e.type === 'pump' || e.type === 'feed') && (e.ml > 0 || e.direct) && e.ts);
+      entries.push(...add); persist(); renderAll(); toast('Đã khôi phục ' + add.length + ' cữ.');
+    } catch (e) { toast('File sao lưu không hợp lệ.'); }
+  };
+  r.readAsText(f); ev.target.value = '';
+};
+
+/* ---------- điều hướng ---------- */
+function showTab(t) {
+  $$('.tab').forEach((s) => s.classList.toggle('on', s.id === 'tab-' + t));
+  $$('nav button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+  window.scrollTo(0, 0); renderAll();
+}
+$$('nav button').forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
+function renderAll() {
+  renderToday();
+  if ($('#tab-charts').classList.contains('on')) renderCharts();
+  if ($('#tab-data').classList.contains('on')) renderHistory();
+}
+renderAll();
+document.addEventListener('visibilitychange', () => { if (!document.hidden && selDay !== todayKey() && false) renderAll(); });
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
