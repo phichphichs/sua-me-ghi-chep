@@ -89,12 +89,14 @@
       const n = +m[1], mult = m[2] === 'phút' ? 60000 : 3600000;
       return { ts: base.getTime() - n * mult, rest: seg.replace(m[0], ' ') };
     }
-    const re = /(\d{1,2})\s*(?:giờ|h(?![\p{L}])|:)\s*(?:(\d{1,2})(?!\d)(?!\s*(?:ml|mi\b|mili|cc|em\b|xi|oz)))?\s*(?:phút)?\s*(rưỡi)?/u;
-    m = re.exec(seg);
+    let m2 = /(?<![\d.])(\d{1,2})\.(\d{2})(?!\d)(?!\s*(?:ml|mil|mi\b|mili|cc|em\b|xi|oz))/u.exec(seg);
+    const re = /(\d{1,2})\s*(?:giờ|h(?![\p{L}])|:)\s*(?:(\d{1,2})(?!\d)(?!\s*(?:ml|mil|mi\b|mili|cc|em\b|xi|oz)))?\s*(?:phút)?\s*(rưỡi)?/u;
+    m = m2 && +m2[2] <= 59 && +m2[1] <= 24 ? [m2[0], m2[1], m2[2], undefined] : re.exec(seg);
     if (!m) return null;
     let h = +m[1];
     let min = m[2] !== undefined ? +m[2] : (m[3] ? 30 : 0);
     if (h > 24 || min > 59) return null;
+    const zero = m[1].length === 2 && m[1][0] === '0'; // "08.00" = 8 giờ sáng (kiểu 24h)
     const period = (/(?<![\p{L}])(sáng|trưa|chiều|tối|đêm)(?![\p{L}])/u.exec(seg) || [])[1];
     let dayOff = 0;
     if (/hôm qua/.test(seg)) dayOff = -1; else if (/hôm kia/.test(seg)) dayOff = -2;
@@ -105,7 +107,7 @@
       else if (period === 'trưa') { if (h < 10) h += 12; }
       else if (period === 'đêm') { if (h >= 6 && h < 12) h += 12; }
       d = mk(h, dayOff);
-    } else if (h > 12 || dayOff !== 0) {
+    } else if (h > 12 || dayOff !== 0 || zero) {
       d = mk(h, dayOff);
     } else {
       // không nói sáng/chiều: chọn mốc gần nhất không ở tương lai
@@ -119,7 +121,7 @@
 
   function parseAmounts(seg) {
     const out = [];
-    const re = /(\d+(?:[.,]\d+)?)\s*(mi\s*li\s*lít|mi\s*li|mili|ml|em\s*eo|xi\s*xi|cc|oz)?/gu;
+    const re = /(\d+(?:[.,]\d+)?)\s*(mi\s*li\s*lít|mi\s*li|mili|mil|mi(?![\p{L}])|ml|em\s*eo|xi\s*xi|cc|oz)?/gu;
     let m;
     while ((m = re.exec(seg))) {
       let v = parseFloat(m[1].replace(',', '.'));

@@ -310,7 +310,7 @@ let pending = null;
 function handleText(text) {
   text = (text || '').trim();
   if (!text) { setStatus('Chưa có nội dung để thêm.', true); return; }
-  const r = MilkParser.parse(text, baseTime());
+  const r = MilkParser.parse(text, baseTime(), { defaultType: 'pump' });
   if (!r.entries.length) { setStatus('Chưa nghe ra lượng sữa. Thử: “hút 120 ml” hoặc “bé uống 60 ml”.', true); return; }
   if (r.needsType) {
     pending = r.entries; renderPreview(true); setStatus('Chưa rõ là hút hay bé uống. Chọn giúp mình nhé.', true); return;
