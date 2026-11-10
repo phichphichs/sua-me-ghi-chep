@@ -56,7 +56,7 @@
   }
 
   const DELIM = /\s*(?:(?<!\d)[,;.!?\n]|[,;.!?\n](?!\d)|(?<![\p{L}])(?:rồi|và|sau đó|xong|tiếp theo|tiếp|với)(?![\p{L}]))\s*/u;
-  const PUMP_RE = /(?<![\p{L}])(?:hút|vắt|bơm|pump)(?![\p{L}])/gu;
+  const PUMP_RE = /(?<![\p{L}])(?:hút|út|vắt|bơm|pump)(?![\p{L}])/gu;
   const FEED_RE = /(?<![\p{L}])(?:bú|uống|bé|con|ăn|bình)(?![\p{L}])/gu;
 
   function keywords(clause) {
@@ -125,7 +125,7 @@
 
   function parseAmounts(seg) {
     const out = [];
-    const re = /(\d+(?:[.,]\d+)?)\s*(mi\s*li\s*lít|mi\s*li|mili|mil|mi(?![\p{L}])|ml|em\s*eo|xi\s*xi|cc|oz)?/gu;
+    const re = /(\d+(?:[.,]\d+)?)\s*(mi\s*li\s*lít|mi\s*li|mili|mil|miu|mi(?![\p{L}])|ml|em\s*eo|xi\s*xi|cc|oz)?/gu;
     let m;
     while ((m = re.exec(seg))) {
       let v = parseFloat(m[1].replace(',', '.'));
