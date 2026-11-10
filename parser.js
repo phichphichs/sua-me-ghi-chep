@@ -90,8 +90,12 @@
       return { ts: base.getTime() - n * mult, rest: seg.replace(m[0], ' ') };
     }
     let m2 = /(?<![\d.])(\d{1,2})\.(\d{2})(?!\d)(?!\s*(?:ml|mil|mi\b|mili|cc|em\b|xi|oz))/u.exec(seg);
-    const re = /(\d{1,2})\s*(?:giờ|h(?![\p{L}])|:)\s*(?:(\d{1,2})(?!\d)(?!\s*(?:ml|mil|mi\b|mili|cc|em\b|xi|oz)))?\s*(?:phút)?\s*(rưỡi)?/u;
+    const re = /(\d{1,2})\s*(?:giờ|gio|h(?![\p{L}])|g(?![\p{L}])|:)\s*(?:(\d{1,2})(?!\d)(?!\s*(?:ml|mil|mi\b|mili|cc|em\b|xi|oz)))?\s*(?:phút)?\s*(rưỡi)?/u;
     m = m2 && +m2[2] <= 59 && +m2[1] <= 24 ? [m2[0], m2[1], m2[2], undefined] : re.exec(seg);
+    if (!m) { // "lúc 8" / "vào 8" không kèm chữ giờ
+      const b = /(?:lúc|vào|khoảng)\s*(\d{1,2})(?![\d.:,])(?!\s*(?:ml|mil|mi\b|mili|cc|em\b|xi|oz|phút|tiếng))/u.exec(seg);
+      if (b) m = [b[0], b[1], undefined, undefined];
+    }
     if (!m) return null;
     let h = +m[1];
     let min = m[2] !== undefined ? +m[2] : (m[3] ? 30 : 0);
@@ -156,7 +160,7 @@
         if (withUnit.length) amounts = withUnit;
         let ml = 0;
         if (!amounts.length) ml = 0;
-        else if (sides.length || type === 'pump') ml = amounts.reduce((s, a) => s + a.ml, 0);
+        else if (sides.length) ml = amounts.reduce((s, a) => s + a.ml, 0);
         else ml = amounts[0].ml;
         let ts = base.getTime();
         if (t) { ts = t.ts; lastExplicit = ts; lastExplicitType = type; }

@@ -318,6 +318,10 @@ function handleText(text) {
   if (settings.auto) commit(r.entries); else { pending = r.entries; renderPreview(false); }
 }
 function commit(list) {
+  const min = (t) => Math.floor(t / 60000);
+  const fresh = list.filter((n) => !entries.some((e) => e.type === n.type && e.ml === n.ml && min(e.ts) === min(n.ts) && !!e.direct === !!n.direct));
+  if (!fresh.length) { pending = null; renderPreview(); setStatus('Cữ này đã có rồi nên không thêm lần nữa.', true); return; }
+  list = fresh;
   const added = list.map((e) => ({ id: uid(), type: e.type, ml: e.ml, ts: e.ts, src: e.src, direct: e.direct || undefined }));
   entries.push(...added); persist();
   pending = null; renderPreview();
