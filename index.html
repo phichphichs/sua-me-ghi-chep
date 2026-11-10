@@ -321,8 +321,9 @@ function commit(list) {
   const added = list.map((e) => ({ id: uid(), type: e.type, ml: e.ml, ts: e.ts, src: e.src, direct: e.direct || undefined }));
   entries.push(...added); persist();
   pending = null; renderPreview();
+  const heard = $('#said').value.trim();
   $('#said').value = '';
-  setStatus('Đã ghi ' + added.length + ' cữ.');
+  setStatus('Đã ghi ' + added.length + ' cữ.' + (heard ? ' Nghe được: “' + heard + '”' : ''));
   if (added.some((e) => dayKey(e.ts) !== selDay)) selDay = dayKey(added[0].ts);
   renderAll();
   toast('Đã thêm: ' + added.map(describe).join(' · '), () => {
