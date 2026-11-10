@@ -56,7 +56,7 @@
   }
 
   const DELIM = /\s*(?:(?<!\d)[,;.!?\n]|[,;.!?\n](?!\d)|(?<![\p{L}])(?:rồi|và|sau đó|xong|tiếp theo|tiếp|với)(?![\p{L}]))\s*/u;
-  const PUMP_RE = /(?<![\p{L}])(?:hút|út|vắt|bơm|pump)(?![\p{L}])/gu;
+  const PUMP_RE = /(?<![\p{L}])(?:hút|hốt|hót|hụt|út|vắt|bơm|pump)(?![\p{L}])/gu;
   const FEED_RE = /(?<![\p{L}])(?:bú|uống|bé|con|ăn|bình)(?![\p{L}])/gu;
 
   function keywords(clause) {
